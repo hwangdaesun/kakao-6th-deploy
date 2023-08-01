@@ -2,6 +2,7 @@ package com.example.kakao.order;
 
 import com.example.kakao.MyRestDoc;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
@@ -29,7 +30,7 @@ public class OrderRestControllerTest extends MyRestDoc {
 
     @WithUserDetails(value = "ssarmango@nate.com")
     @Test
-    public void save_test() throws Exception {
+    public void save_susccess_test() throws Exception {
         // given teardown.sql
 
         // when
@@ -73,7 +74,7 @@ public class OrderRestControllerTest extends MyRestDoc {
 
     @WithUserDetails(value = "ssarmango@nate.com")
     @Test
-    public void findById_test() throws Exception {
+    public void findById_success_test() throws Exception {
         // given teardown.sql
 
         int id = 1;
@@ -114,6 +115,31 @@ public class OrderRestControllerTest extends MyRestDoc {
         resultActions.andExpect(jsonPath("$.response.totalPrice").value("310900"));
 
 
+        resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
+    }
+
+    @DisplayName("존재하지 않는 결제를 조회할 때 예외 터뜨리기")
+    @WithUserDetails(value = "ssarmango@nate.com")
+    @Test
+    public void findById_fail_test() throws Exception {
+        // given teardown.sql
+
+        int id = 2;
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                get("/orders/" + id)
+        );
+
+        // console
+        String responseBody = resultActions.andReturn().getResponse().getContentAsString();
+        System.out.println("테스트 : "+responseBody);
+
+        // verify
+
+        resultActions.andExpect(jsonPath("$.success").value("false"));
+        resultActions.andExpect(jsonPath("$.error.message").value("존재하지 않는 주문입니다."));
+        resultActions.andExpect(jsonPath("$.error.status").value("400"));
         resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
     }
 }
